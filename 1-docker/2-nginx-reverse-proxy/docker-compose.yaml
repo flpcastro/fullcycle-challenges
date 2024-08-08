@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - '8080:80'
+    depends_on:
+      - node
+    networks:
+      - my-network
+
+  node:
+    build:
+      context: ./node
+      platforms: ['linux/amd64']
+    volumes:
+      - ./node:/usr/src/app
+    depends_on:
+      - mysql
+    networks:
+      - my-network
+
+  mysql:
+    image: mysql:5.7
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    driver: bridge
