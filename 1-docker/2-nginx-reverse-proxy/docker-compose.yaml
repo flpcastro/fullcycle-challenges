@@ -17,20 +17,43 @@ services:
     volumes:
       - ./node:/usr/src/app
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - my-network
 
   mysql:
     image: mysql:5.7
     platform: linux/amd64
+    restart: always
+    tty: true
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      - MYSQL_ROOT_PASSWORD=root
     volumes:
+      - mysql:/var/lib/mysql
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - my-network
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'mysqladmin',
+          'ping',
+          '-h',
+          'localhost',
+          '-u',
+          'root',
+          '-p$$MYSQL_ROOT_PASSWORD',
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 4
 
 networks:
   my-network:
     driver: bridge
+
+volumes:
+  mysql:
+    driver: local
